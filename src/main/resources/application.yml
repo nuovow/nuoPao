@@ -1,0 +1,29 @@
+
+spring:
+  application:
+    name: nuoPao-server
+  datasource:
+    username: ${mysql.user}
+    password: ${mysql.password}
+    url: ${mysql.host}
+  mail:
+    username: ${mail.username}
+    host: ${mail.host}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+    password: ${mail.password}
+    port: ${mail.port}
+  data:
+    redis:
+      port: 6379
+      host: localhost
+      password: ${redis.password}
+mybatis-plus:
+  global-config:
+    db-config:
+      id-type: assign_id

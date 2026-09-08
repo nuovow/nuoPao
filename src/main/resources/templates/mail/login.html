@@ -1,0 +1,47 @@
+<!-- src/main/resources/templates/mail/login-verification.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录验证码 - NuoPao</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f7fa; font-family: 'Segoe UI', Arial, sans-serif;">
+<table cellpadding="0" cellspacing="0" border="0" align="center" width="100%" style="background-color: #f4f7fa; padding: 20px 0;">
+    <tr>
+        <td align="center">
+            <table cellpadding="0" cellspacing="0" border="0" width="600" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); max-width: 600px; width: 100%;">
+                <tr>
+                    <td style="padding: 40px 30px 30px 30px;">
+                        <h1 style="margin: 0 0 20px 0; font-size: 28px; font-weight: 600; color: #2c3e50; text-align: center;">
+                            <span style="color: #3498db;">Nuo</span><span style="color: #2c3e50;">Pao</span>
+                        </h1>
+                        <h2 style="font-size: 22px; color: #2c3e50; margin: 0 0 10px 0; text-align: center;">
+                            登录安全验证
+                        </h2>
+                        <p style="font-size: 16px; color: #5a6a7a; line-height: 1.6; margin: 10px 0 20px 0; text-align: center;">
+                            检测到你在新设备上登录，请输入下方验证码以确认身份。验证码 <strong>5 分钟</strong> 内有效。
+                        </p>
+                        <!-- 验证码框（不同颜色，用于区分） -->
+                        <table cellpadding="0" cellspacing="0" border="0" align="center" style="margin: 25px auto; background-color: #fff5f5; border-radius: 8px; border: 1px dashed #e74c3c;">
+                            <tr>
+                                <td style="padding: 20px 40px; text-align: center;">
+                                    <span style="font-size: 48px; font-weight: 700; color: #e74c3c; letter-spacing: 10px;" th:text="${code}">654321</span>
+                                </td>
+                            </tr>
+                        </table>
+                        <p style="font-size: 14px; color: #95a5a6; text-align: center; margin: 10px 0 20px 0;">
+                            如果这不是你的操作，请立即联系客服。
+                        </p>
+                        <hr style="border: 0; border-top: 1px solid #ecf0f1; margin: 30px 0 15px 0;">
+                        <p style="font-size: 13px; color: #b0b8c0; text-align: center; margin: 0;">
+                            <span th:text="${footerText}">NuoPao 安全团队</span> ｜ 请勿将验证码泄露给他人。
+                        </p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>
