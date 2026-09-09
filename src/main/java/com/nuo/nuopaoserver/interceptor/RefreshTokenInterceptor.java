@@ -21,10 +21,10 @@ public class RefreshTokenInterceptor implements HandlerInterceptor {
         if(token == null){
             return true;
         }
-        if(!redis.hasKey(token)){
+        String redisKey = RedisConstant.USER_LOGIN_TOKEN + token;
+        if(!redis.hasKey(redisKey)){
             return true;
         }
-        String redisKey = RedisConstant.USER_LOGIN_TOKEN + token;
         redis.expire(redisKey, RedisConstant.USER_LOGIN_TOKEN_EXPIRE, TimeUnit.MINUTES);
         return true;
     }

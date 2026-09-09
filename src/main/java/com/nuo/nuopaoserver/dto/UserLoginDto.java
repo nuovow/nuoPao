@@ -1,7 +1,10 @@
 package com.nuo.nuopaoserver.dto;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
-import jakarta.validation.constraints.NotBlank;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,14 +18,11 @@ public class UserLoginDto {
 
 
     /**
-     * 密码（兼容前端传 password / userPassword 两种字段名）
+     * 密码（加密存储）
      */
-    @JsonAlias("password")
-    @NotBlank(message = "密码不能为空")
-    @Size(min = 6, max = 20, message = "密码长度在6到20个字符之间")
+    @Size(min = 8, max = 20, message = "密码长度在8到20个字符之间")
     private String userPassword;
 
-    @NotBlank(message = "用户名不能为空")
     @Size(min = 2, max = 20, message = "用户名长度在2到20个字符之间")
     private String username;
 

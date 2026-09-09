@@ -27,3 +27,5 @@ mybatis-plus:
   global-config:
     db-config:
       id-type: assign_id
+tag:
+  max-level: ${tag.max-level}

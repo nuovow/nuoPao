@@ -126,6 +126,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         User user = this.getOne(new LambdaQueryWrapper<>(User.class)
                 .eq(User::getEmail, dto.getEmail()));
+        if(user == null){
+            throw new BizException("该账户不存在");
+        }
         //缓存token
         String token = createToken(user.getId());
         //删除验证码

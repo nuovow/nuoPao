@@ -1,21 +1,18 @@
 package com.nuo.nuopaoserver.vo;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
 
-import java.time.LocalDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.util.List;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class TagVo {
-
+    private Long id;
     private String tagName;
-
-    private String  createUser;
-
-    private String avatarUrl;
-
-    private String parentTag;
-
+    private List<TagVo> children;
 
 }
