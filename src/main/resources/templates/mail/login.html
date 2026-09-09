@@ -1,4 +1,3 @@
-<!-- src/main/resources/templates/mail/login-verification.html -->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -20,22 +19,22 @@
                             登录安全验证
                         </h2>
                         <p style="font-size: 16px; color: #5a6a7a; line-height: 1.6; margin: 10px 0 20px 0; text-align: center;">
-                            检测到你在新设备上登录，请输入下方验证码以确认身份。验证码 <strong>5 分钟</strong> 内有效。
+                            你好，<strong th:text="${username}"></strong>！检测到你在新设备上登录，请输入下方验证码确认身份。请在 <strong th:text="${expireMinute}"></strong> 分钟内完成验证。
                         </p>
-                        <!-- 验证码框（不同颜色，用于区分） -->
-                        <table cellpadding="0" cellspacing="0" border="0" align="center" style="margin: 25px auto; background-color: #fff5f5; border-radius: 8px; border: 1px dashed #e74c3c;">
+                        <!-- 和注册页统一配色：浅蓝底色+蓝色虚线边框 -->
+                        <table cellpadding="0" cellspacing="0" border="0" align="center" style="margin: 25px auto; background-color: #f0f8ff; border-radius: 8px; border: 1px dashed #3498db;">
                             <tr>
                                 <td style="padding: 20px 40px; text-align: center;">
-                                    <span style="font-size: 48px; font-weight: 700; color: #e74c3c; letter-spacing: 10px;" th:text="${code}">654321</span>
+                                    <span style="font-size: 48px; font-weight: 700; color: #2c3e50; letter-spacing: 10px;" th:text="${code}">654321</span>
                                 </td>
                             </tr>
                         </table>
                         <p style="font-size: 14px; color: #95a5a6; text-align: center; margin: 10px 0 20px 0;">
-                            如果这不是你的操作，请立即联系客服。
+                            如果不是你本人操作，请忽略本邮件，验证码有效期为 <strong th:text="${expireMinute}"></strong> 分钟。
                         </p>
                         <hr style="border: 0; border-top: 1px solid #ecf0f1; margin: 30px 0 15px 0;">
                         <p style="font-size: 13px; color: #b0b8c0; text-align: center; margin: 0;">
-                            <span th:text="${footerText}">NuoPao 安全团队</span> ｜ 请勿将验证码泄露给他人。
+                            NuoPao 安全团队 ｜ 此验证码仅用于本次登录，请勿泄露给任何人。
                         </p>
                     </td>
                 </tr>

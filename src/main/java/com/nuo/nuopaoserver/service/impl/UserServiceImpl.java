@@ -7,21 +7,19 @@ import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import com.nuo.nuopaoserver.constant.RedisConstant;
-import com.nuo.nuopaoserver.dto.UserRegisterDto;
-import com.nuo.nuopaoserver.dto.UserRegisterGetCode;
+import com.nuo.nuopaoserver.context.UserContext;
+import com.nuo.nuopaoserver.dto.*;
 import com.nuo.nuopaoserver.entity.User;
 import com.nuo.nuopaoserver.exception.BizException;
 import com.nuo.nuopaoserver.mapper.UserMapper;
 import com.nuo.nuopaoserver.service.UserService;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
+import com.nuo.nuopaoserver.vo.LoginVo;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
@@ -38,6 +36,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private final TemplateEngine templateEngine;
     private final JavaMailSenderImpl mailSender;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
     @Value("${spring.mail.username}")
     private String from;
 
@@ -56,25 +55,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         //生成验证码
         String code = RandomUtil.randomString(6);
         redis.opsForValue().set(RedisConstant.USER_REGISTER_CODE + dto.getEmail(), code, RedisConstant.USER_REGISTER_CODE_EXPIRE, TimeUnit.MINUTES);
-        log.info("Sent registration code {} to {}", code, dto.getEmail());
-        //读取填充模板
+        log.info("Sent  code {} to {}", code, dto.getEmail());
         Context context = new Context();
-        context.setVariable("username",dto.getEmail().split("@")[0]);
+        context.setVariable("username",dto.getEmail());
         context.setVariable("expireMinute",RedisConstant.USER_REGISTER_CODE_EXPIRE);
         context.setVariable("code", code);
-        String html = templateEngine.process("mail/register.html", context);
-        MimeMessage mimeMessage = mailSender.createMimeMessage();
-        try {
-            MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true);
-            mimeMessageHelper.setFrom(from);
-            mimeMessageHelper.setTo(dto.getEmail());
-            mimeMessageHelper.setSubject("【NuoPao】注册邮箱验证码");
-            mimeMessageHelper.setText(html, true);
-            mailSender.send(mimeMessage);
-        } catch (MessagingException e) {
-            throw new RuntimeException(e);
-        }
+        emailService.sendEmail(
+                dto.getEmail(),
+                context,
+                "mail/register",
+                "【NuoPao注册验证码】"
+        );
     }
+
 
     @Override
     public void register(UserRegisterDto dto) {
@@ -89,9 +82,86 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         Snowflake snowflake = new Snowflake(1, 1);
         long l = snowflake.nextId();
         String planeCode = Base62.encode(String.valueOf(l));
-        user.setUserPassword(passwordEncoder.encode(dto.getPassword()));
+        user.setUserPassword(passwordEncoder.encode(dto.getUserPassword()));
         user.setPlanetCode(planeCode);
         save(user);
         redis.delete(RedisConstant.USER_REGISTER_CODE + dto.getEmail());
+    }
+
+    @Override
+    public void loginGetCode(@Valid UserLoginGetCode dto) {
+        User user = this.getOne(new LambdaQueryWrapper<>(User.class)
+                .eq(User::getEmail, dto.getEmail()));
+        if(user == null){
+            throw new BizException("该账户不存在");
+        }
+        String codeKey = RedisConstant.USER_LOGIN +dto.getEmail();
+        if (redis.hasKey(codeKey)) {
+            throw new BizException("验证码已发送，请勿重复获取");
+        }
+        String code = RandomUtil.randomString(6);
+        redis.opsForValue().set(codeKey, code, RedisConstant.USER_LOGIN_EXPIRE, TimeUnit.MINUTES);
+        log.info("Sent  code {} to {}", code, dto.getEmail());
+        Context context = new Context();
+        context.setVariable("username",user.getUsername());
+        context.setVariable("expireMinute",RedisConstant.USER_LOGIN_EXPIRE);
+        context.setVariable("code", code);
+        emailService.sendEmail(
+                dto.getEmail(),
+                context,
+                "mail/login",
+                "【NuoPao登录验证码】"
+        );
+    }
+
+    @Override
+    public LoginVo emailLogin(EmailLoginDto dto) {
+        String key = RedisConstant.USER_LOGIN + dto.getEmail();
+        if(!redis.hasKey(key)){
+            throw new BizException("验证码已过期");
+        }
+        String code = redis.opsForValue().get(key);
+        if(!code.equals(dto.getCode())){
+            throw new BizException("验证码错误");
+        }
+        User user = this.getOne(new LambdaQueryWrapper<>(User.class)
+                .eq(User::getEmail, dto.getEmail()));
+        //缓存token
+        String token = createToken(user.getId());
+        //删除验证码
+        redis.delete(key);
+        LoginVo loginVo = BeanUtil.copyProperties(user, LoginVo.class);
+        loginVo.setToken(token);
+        return loginVo;
+    }
+
+    @Override
+    public LoginVo login(UserLoginDto dto) {
+        User user = this.getOne(new LambdaQueryWrapper<>(User.class)
+                .eq(User::getUsername, dto.getUsername())
+               );
+        if(user == null){
+            throw new BizException("账户不存在");
+        }
+        if(!passwordEncoder.matches(dto.getUserPassword(), user.getUserPassword())){
+            throw new BizException("密码错误");
+        }
+        String token = createToken(user.getId());
+        LoginVo loginVo = BeanUtil.copyProperties(user, LoginVo.class);
+        loginVo.setToken(token);
+        return loginVo;
+    }
+
+    @Override
+    public void logout(String token) {
+        redis.delete(RedisConstant.USER_LOGIN_TOKEN + token);
+    }
+
+    public String createToken(Long id){
+        String token = RandomUtil.randomString(32);
+        String tokenKey = (RedisConstant.USER_LOGIN_TOKEN +token );
+        redis.opsForValue().set(tokenKey, String.valueOf(id), RedisConstant.USER_LOGIN_TOKEN_EXPIRE, TimeUnit.MINUTES);
+        log.info("create token {}", token);
+        return token;
     }
 }

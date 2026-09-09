@@ -19,7 +19,7 @@ public class UserRegisterDto {
     private String username;
     @NotNull(message = "密码不能为空")
     @Size(min = 6, max = 20, message = "密码长度在6到20个字符之间")
-    private String password;
+    private String userPassword;
     @NotNull(message = "验证码不能为空")
     private String code;
 }
