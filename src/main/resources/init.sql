@@ -34,6 +34,7 @@ create table tag
     tagName    varchar(64)      not null            comment '标签名',
     userId     bigint                              null comment '上传标签的用户ID',
     parentId   bigint                              null comment '父标签id（null表示一级标签）',
+    level      int      default 1                  not null comment '层级 1为顶级',
     createTime datetime default current_timestamp  null comment '创建时间',
     updateTime datetime default current_timestamp  null on update current_timestamp comment '更新时间',
     isDelete   tinyint  default 0                  not null comment '是否删除 0-未删 1-已删',

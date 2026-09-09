@@ -44,6 +44,12 @@ public class Tag implements Serializable {
     private Long parentId;
 
     /**
+     * 层级 1为顶级
+     */
+    @TableField("level")
+    private Integer level;
+
+    /**
      * 创建时间
      */
     @TableField("createTime")

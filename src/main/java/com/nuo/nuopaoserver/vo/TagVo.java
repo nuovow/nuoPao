@@ -13,6 +13,7 @@ import java.util.List;
 public class TagVo {
     private Long id;
     private String tagName;
+    private Integer level;
     private List<TagVo> children;
 
 }
