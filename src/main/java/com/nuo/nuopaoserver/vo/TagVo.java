@@ -14,6 +14,7 @@ public class TagVo {
     private Long id;
     private String tagName;
     private Integer level;
+    private Long parentId;
     private List<TagVo> children;
 
 }

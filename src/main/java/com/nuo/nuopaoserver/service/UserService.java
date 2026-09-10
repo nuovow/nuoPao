@@ -5,7 +5,10 @@ import com.baomidou.mybatisplus.spring.service.IService;
 import com.nuo.nuopaoserver.dto.*;
 import com.nuo.nuopaoserver.entity.User;
 import com.nuo.nuopaoserver.vo.LoginVo;
+import com.nuo.nuopaoserver.vo.TagVo;
 import jakarta.validation.Valid;
+
+import java.util.List;
 
 public interface UserService extends IService<User> {
     void registerGetCode(@Valid UserRegisterGetCode dto);
@@ -19,4 +22,7 @@ public interface UserService extends IService<User> {
     LoginVo login(@Valid UserLoginDto dto);
 
     void logout(String token);
+
+
+    void tagBinding(List<Long> tagIds);
 }

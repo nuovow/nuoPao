@@ -74,7 +74,7 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
     private List<TagVo> createTagTree(List<Tag> tags) {
         Map<Long, TagVo> map = new HashMap<>();
         for (Tag tag : tags) {
-            map.put(tag.getId(), new TagVo(tag.getId(), tag.getTagName(), tag.getLevel(), null));
+            map.put(tag.getId(), new TagVo(tag.getId(), tag.getTagName(), tag.getLevel(), tag.getParentId(), null));
         }
         List<TagVo> roots = new ArrayList<>();
         for (Tag tag : tags) {

@@ -9,11 +9,16 @@ import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import com.nuo.nuopaoserver.constant.RedisConstant;
 import com.nuo.nuopaoserver.context.UserContext;
 import com.nuo.nuopaoserver.dto.*;
+import com.nuo.nuopaoserver.entity.Tag;
 import com.nuo.nuopaoserver.entity.User;
+import com.nuo.nuopaoserver.entity.UserTag;
 import com.nuo.nuopaoserver.exception.BizException;
+import com.nuo.nuopaoserver.mapper.TagMapper;
 import com.nuo.nuopaoserver.mapper.UserMapper;
+import com.nuo.nuopaoserver.mapper.UserTagMapper;
 import com.nuo.nuopaoserver.service.UserService;
 import com.nuo.nuopaoserver.vo.LoginVo;
+import com.nuo.nuopaoserver.vo.TagVo;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,10 +27,15 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -39,6 +49,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private final EmailService emailService;
     @Value("${spring.mail.username}")
     private String from;
+    private final TagMapper tagMapper;
+    private final UserTagMapper userTagMapper;
 
     @Override
     public void registerGetCode(@Valid UserRegisterGetCode dto) {
@@ -135,6 +147,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         redis.delete(key);
         LoginVo loginVo = BeanUtil.copyProperties(user, LoginVo.class);
         loginVo.setToken(token);
+        loginVo.setTags(getUserTags(user.getId()));
         return loginVo;
     }
 
@@ -152,6 +165,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         String token = createToken(user.getId());
         LoginVo loginVo = BeanUtil.copyProperties(user, LoginVo.class);
         loginVo.setToken(token);
+        loginVo.setTags(getUserTags(user.getId()));
         return loginVo;
     }
 
@@ -159,6 +173,66 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public void logout(String token) {
         redis.delete(RedisConstant.USER_LOGIN_TOKEN + token);
     }
+
+    @Override
+    @Transactional
+    public void tagBinding(List<Long> tagIds) {
+        //先删除biaoq
+        userTagMapper.delete(new LambdaQueryWrapper<UserTag>()
+                .eq(UserTag::getUserId, UserContext.getCurrentUserId()));
+        List<UserTag> collect = tagIds.stream()
+                .map(tagid -> {
+                    UserTag userTag = new UserTag();
+                    userTag.setUserId(UserContext.getCurrentUserId());
+                    userTag.setTagId(tagid);
+                    return userTag;
+                }).collect(Collectors.toList());
+        userTagMapper.insert(collect);
+    }
+
+
+    /**
+     * 获取用户绑定的tags
+     * @return
+     */
+
+    public List<TagVo> getUserTags(Long userId) {
+        List<Tag> userTags = tagMapper.getUserTags(userId);
+        if (userTags.isEmpty()) {
+            return new ArrayList<>();
+        }
+        // 绑定的都是二级标签，其父分类不在绑定关系里，补查父标签用于组装树
+        List<Long> parentIds = userTags.stream()
+                .map(Tag::getParentId)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .filter(pid -> userTags.stream().noneMatch(t -> t.getId().equals(pid)))
+                .collect(java.util.stream.Collectors.toList());
+        if (!parentIds.isEmpty()) {
+            userTags.addAll(tagMapper.selectBatchIds(parentIds));
+        }
+        HashMap<Long, TagVo> map = new HashMap<>();
+        ArrayList<TagVo> list = new ArrayList<>();
+        for(Tag tag : userTags){
+            map.put(tag.getId(),BeanUtil.copyProperties(tag, TagVo.class));
+        }
+        for(TagVo tagVo : map.values()){
+            if(tagVo.getParentId() == null){
+                list.add(tagVo);
+            }
+            else{
+                TagVo parent = map.get(tagVo.getParentId());
+                if(parent != null){
+                    if(parent.getChildren() == null){
+                        parent.setChildren(new ArrayList<>());
+                    }
+                    parent.getChildren().add(tagVo);
+                }
+            }
+        }
+        return list;
+    }
+
 
     public String createToken(Long id){
         String token = RandomUtil.randomString(32);

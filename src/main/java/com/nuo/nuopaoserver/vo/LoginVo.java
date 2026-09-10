@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -33,7 +34,6 @@ public class LoginVo {
     /**
      * 性别 0-女 1-男 2-未知
      */
-
     private Integer gender;
 
     /**
@@ -72,5 +72,6 @@ public class LoginVo {
 
     private String token;
 
+    private List<TagVo> tags;
 
 }
