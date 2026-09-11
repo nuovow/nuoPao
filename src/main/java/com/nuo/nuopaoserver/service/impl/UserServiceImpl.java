@@ -5,6 +5,7 @@ import cn.hutool.core.codec.Base62;
 import cn.hutool.core.lang.Snowflake;
 import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import com.nuo.nuopaoserver.constant.RedisConstant;
 import com.nuo.nuopaoserver.context.UserContext;
@@ -17,8 +18,10 @@ import com.nuo.nuopaoserver.mapper.TagMapper;
 import com.nuo.nuopaoserver.mapper.UserMapper;
 import com.nuo.nuopaoserver.mapper.UserTagMapper;
 import com.nuo.nuopaoserver.service.UserService;
+import com.nuo.nuopaoserver.vo.GetUserByTagsVo;
 import com.nuo.nuopaoserver.vo.LoginVo;
 import com.nuo.nuopaoserver.vo.TagVo;
+import com.nuo.nuopaoserver.vo.UserDetailVo;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -188,6 +191,57 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                     return userTag;
                 }).collect(Collectors.toList());
         userTagMapper.insert(collect);
+    }
+
+    /**
+     * 根据标签分页查询用户
+     * @param dto
+     * @return
+     */
+    @Override
+    public Page<GetUserByTagsVo> getUserByTag(GetUserByTagsDto dto) {
+        long current = dto.getPage() == null || dto.getPage() < 1 ? 1 : dto.getPage();
+        long size = dto.getPageSize() == null || dto.getPageSize() < 1 ? 10 : Math.min(dto.getPageSize(), 100);
+        return userTagMapper.getUserByTag(new Page<>(current, size), dto.getTagIds());
+    }
+
+
+    /**
+     * 用户详情（脱敏，含绑定的标签树）
+     */
+    @Override
+    public UserDetailVo getUserDetail(UserDetailDto dto) {
+        User user = this.getById(dto.getId());
+        if (user == null) {
+            throw new BizException("用户不存在");
+        }
+        UserDetailVo vo = BeanUtil.copyProperties(user, UserDetailVo.class);
+        vo.setTags(getUserTags(user.getId()));
+        return vo;
+    }
+
+
+    /**
+     * 完善个人信息：仅更新传入的字段，返回更新后的最新资料（不含 token）
+     */
+    @Override
+    public LoginVo updateUser(UpdateUserDto dto) {
+        Long uid = UserContext.getCurrentUserId();
+        User update = new User();
+        update.setId(uid);
+        if (dto.getUsername() != null) update.setUsername(dto.getUsername());
+        if (dto.getAvatarUrl() != null) update.setAvatarUrl(dto.getAvatarUrl());
+        if (dto.getGender() != null) update.setGender(dto.getGender());
+        if (dto.getPhone() != null) update.setPhone(dto.getPhone());
+        // 全部字段都没传时不执行 UPDATE，否则 MP 会生成非法的 "UPDATE user SET WHERE id=?"
+        if (update.getUsername() != null || update.getAvatarUrl() != null
+                || update.getGender() != null || update.getPhone() != null) {
+            this.updateById(update);
+        }
+
+        LoginVo vo = BeanUtil.copyProperties(this.getById(uid), LoginVo.class);
+        vo.setTags(getUserTags(uid));
+        return vo;
     }
 
 

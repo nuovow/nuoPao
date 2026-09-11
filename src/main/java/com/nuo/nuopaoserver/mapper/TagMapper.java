@@ -10,7 +10,7 @@ import java.util.List;
 
 @Mapper
 public interface TagMapper extends BaseMapper<Tag> {
-    @Select("select tag.* from user_tag join tag on tag.id = user_tag.tagId " +
-            "where user_tag.userId = #{userId} and tag.isDelete = 0")
+
+    @Select("SELECT * FROM tag WHERE id IN (SELECT tagId FROM user_tag WHERE userId = #{userId})")
     List<Tag> getUserTags(@Param("userId") Long userId);
 }

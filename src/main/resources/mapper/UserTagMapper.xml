@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.nuo.nuopaoserver.mapper.UserTagMapper">
+    <select id="getUserByTag" resultType="com.nuo.nuopaoserver.vo.GetUserByTagsVo">
+        SELECT
+            u.id,
+            u.username,
+            u.avatarUrl,
+            u.createTime,
+            u.planetCode,
+            m.matchCount,
+            m.matchIds,
+            (
+                SELECT GROUP_CONCAT(t.tagName)
+                FROM tag t
+                WHERE FIND_IN_SET(t.id, m.matchIds)
+            ) AS matchTags
+        FROM `user` u
+                 JOIN (
+            SELECT
+                userId,
+                COUNT(tagId) AS matchCount,
+                GROUP_CONCAT(DISTINCT tagId) AS matchIds
+            FROM user_tag
+            WHERE tagId IN
+            <foreach item="tagId" index="index" collection="tagIds" open="(" separator="," close=")">
+                #{tagId}
+            </foreach>
+            GROUP BY userId
+        ) m ON u.id = m.userId
+        ORDER BY m.matchCount DESC
+    </select>
+</mapper>

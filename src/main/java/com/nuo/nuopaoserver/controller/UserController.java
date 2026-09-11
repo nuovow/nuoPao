@@ -1,11 +1,14 @@
 package com.nuo.nuopaoserver.controller;
 
-import cn.hutool.http.server.HttpServerRequest;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nuo.nuopaoserver.common.Result;
 import com.nuo.nuopaoserver.dto.*;
 import com.nuo.nuopaoserver.service.UserService;
+import com.nuo.nuopaoserver.vo.GetUserByTagsVo;
 import com.nuo.nuopaoserver.vo.LoginVo;
 import com.nuo.nuopaoserver.vo.TagVo;
+import com.nuo.nuopaoserver.vo.UserDetailVo;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +53,7 @@ public class UserController {
     }
 
     @PostMapping("/logout")
-    public Result logout(HttpServerRequest request){
+    public Result logout(HttpServletRequest request){
         String token = request.getHeader("token");
         userService.logout(token);
         return Result.success();
@@ -61,6 +64,25 @@ public class UserController {
         userService.tagBinding(tagIds);
         return Result.success();
     }
+
+    @GetMapping("/getByTag")
+    public Result getUserByTag(@Valid  GetUserByTagsDto dto){
+        Page<GetUserByTagsVo> page = userService.getUserByTag(dto);
+        return Result.success(page);
+    }
+
+    @GetMapping("/detail")
+    public Result getUserDetail(@Valid UserDetailDto dto){
+        UserDetailVo vo = userService.getUserDetail(dto);
+        return Result.success(vo);
+    }
+
+    @PostMapping("/update")
+    public Result updateUser(@Valid @RequestBody UpdateUserDto dto){
+        LoginVo vo = userService.updateUser(dto);
+        return Result.success(vo);
+    }
+
 
 
 }
