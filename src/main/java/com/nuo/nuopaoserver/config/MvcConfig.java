@@ -18,6 +18,8 @@ public class MvcConfig implements WebMvcConfigurer {
         registry.addInterceptor(new GlobalInterCeptor(redis)).order(2)
                 .excludePathPatterns("/user/login"
                 , "/user/login/*"
-                , "/user/register/*");
+                , "/user/register/*"
+                // WS 握手认证由 HandshakeInterceptor 负责（token 在 URL 上，这里只认 header）
+                , "/ws");
     }
 }
