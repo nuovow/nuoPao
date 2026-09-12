@@ -13,4 +13,8 @@ public class RedisConstant {
     // RedisConstant 里加两个前缀，和现有风格统一
     public static final String USER_FOLLOW = "user:follow:";   // 后面拼 userId → 我关注了谁
     public static final String USER_FANS   = "user:fans:";     // 后面拼 userId → 谁关注了我
+
+    /** WS 握手一次性票据：短时有效、用后即焚，避免主 token 裸露在 URL 上 */
+    public static final String WS_TICKET = "ws_ticket:";
+    public static final Long WS_TICKET_EXPIRE_SECONDS = 30L;
 }

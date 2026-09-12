@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.nuo.nuopaoserver.mapper.ChatMessageMapper">
+    <!-- 会话列表：按对方分组取 MAX(id) 定位最后一条，顺便聚合未读数；注意列名是驼峰（表结构如此） -->
+    <select id="sessions" resultType="com.nuo.nuopaoserver.vo.ChatSessionVo">
+        SELECT
+            u.id                                   AS peerId,
+            u.username,
+            u.avatarUrl,
+            u.planetCode,
+            m.content                              AS lastContent,
+            m.createTime                           AS lastTime,
+            t.unread
+        FROM (
+            SELECT
+                IF(fromUserId = #{me}, toUserId, fromUserId) AS peer,
+                MAX(id)                                      AS maxId,
+                SUM(CASE WHEN toUserId = #{me} AND isRead = 0 THEN 1 ELSE 0 END) AS unread
+            FROM chat_message
+            WHERE fromUserId = #{me} OR toUserId = #{me}
+            GROUP BY peer
+        ) t
+        JOIN chat_message m ON m.id = t.maxId
+        JOIN `user` u ON u.id = t.peer
+        ORDER BY m.createTime DESC
+    </select>
+</mapper>

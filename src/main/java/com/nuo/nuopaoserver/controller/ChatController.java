@@ -53,4 +53,9 @@ public class ChatController {
         chatMessageService.markRead(UserContext.getCurrentUserId(), dto.getUserId());
         return Result.success();
     }
+
+    @GetMapping("/sessions")
+    public Result sessions() {
+        return Result.success(chatMessageService.sessions(UserContext.getCurrentUserId()));
+    }
 }

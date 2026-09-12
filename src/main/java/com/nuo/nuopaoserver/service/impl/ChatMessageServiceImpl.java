@@ -6,7 +6,10 @@ import com.nuo.nuopaoserver.entity.ChatMessage;
 import com.nuo.nuopaoserver.mapper.ChatMessageMapper;
 import com.nuo.nuopaoserver.service.ChatMessageService;
 import com.nuo.nuopaoserver.vo.ChatMessageVo;
+import com.nuo.nuopaoserver.vo.ChatSessionVo;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class ChatMessageServiceImpl extends ServiceImpl<ChatMessageMapper, ChatMessage> implements ChatMessageService {
@@ -54,5 +57,13 @@ public class ChatMessageServiceImpl extends ServiceImpl<ChatMessageMapper, ChatM
                 .eq(ChatMessage::getIsRead, 0)
                 .set(ChatMessage::getIsRead, 1)
                 .update();
+    }
+
+    /**
+     * 会话列表
+     */
+    @Override
+    public List<ChatSessionVo> sessions(Long me) {
+        return this.baseMapper.sessions(me);
     }
 }

@@ -4,6 +4,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.spring.service.IService;
 import com.nuo.nuopaoserver.entity.ChatMessage;
 import com.nuo.nuopaoserver.vo.ChatMessageVo;
+import com.nuo.nuopaoserver.vo.ChatSessionVo;
+
+import java.util.List;
 
 public interface ChatMessageService extends IService<ChatMessage> {
 
@@ -21,4 +24,9 @@ public interface ChatMessageService extends IService<ChatMessage> {
      * 把对方发给我的未读消息标记为已读
      */
     void markRead(Long me, Long peer);
+
+    /**
+     * 会话列表（每个聊过天的人一行：最后一条消息 + 未读数）
+     */
+    List<ChatSessionVo> sessions(Long me);
 }
